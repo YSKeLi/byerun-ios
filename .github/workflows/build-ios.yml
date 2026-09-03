@@ -1,0 +1,59 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build web assets (app mode)
+        run: npm run build -- --mode app
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Pod install
+        run: |
+          cd ios/App
+          pod install
+
+      - name: Build unsigned .app
+        run: |
+          cd ios/App
+          xcodebuild build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package IPA
+        run: |
+          cd ios/App/build/Release-iphoneos
+          mkdir -p Payload
+          cp -r App.app Payload/
+          zip -r Byerun.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Byerun-ios-ipa
+          path: ios/App/build/Release-iphoneos/Byerun.ipa
+          if-no-files-found: error
