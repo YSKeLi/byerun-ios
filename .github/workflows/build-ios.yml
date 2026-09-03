@@ -44,7 +44,7 @@ jobs:
 
       - name: Package IPA
         run: |
-          cd ios/App/build/Release-iphoneos
+          cd ios/App/build/Build/Products/Release-iphoneos
           mkdir -p Payload
           cp -r App.app Payload/
           zip -r Byerun.ipa Payload
@@ -53,5 +53,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Byerun-ios-ipa
-          path: ios/App/build/Release-iphoneos/Byerun.ipa
+          path: ios/App/build/Build/Products/Release-iphoneos/Byerun.ipa
           if-no-files-found: error
+
